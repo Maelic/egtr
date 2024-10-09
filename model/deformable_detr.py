@@ -459,9 +459,7 @@ if is_scipy_available():
     from scipy.optimize import linear_sum_assignment
 
 if is_vision_available():
-    from transformers.models.detr.feature_extraction_detr import (
-        center_to_corners_format,
-    )
+    from transformers.image_transforms import center_to_corners_format
 
 if is_timm_available():
     from timm import create_model
@@ -728,6 +726,47 @@ def replace_batch_norm(m, name=""):
             setattr(m, attr_str, frozen)
     for n, ch in m.named_children():
         replace_batch_norm(ch, n)
+
+
+class DetrTimmConvEncoder(nn.Module):
+    """
+    Convolutional encoder (backbone) from the timm library.
+    nn.BatchNorm2d layers are replaced by DetrFrozenBatchNorm2d as defined above.
+    """
+
+    def __init__(self, name: str, dilation: bool, use_pretrained_backbone: bool):
+        super().__init__()
+
+        kwargs = {}
+        if dilation:
+            kwargs["output_stride"] = 16
+
+        requires_backends(self, ["timm"])
+
+        backbone = create_model(
+            name, pretrained=use_pretrained_backbone, features_only=True, out_indices=(1, 2, 3, 4), **kwargs
+        )
+        # replace batch norm by frozen batch norm
+        with torch.no_grad():
+            replace_batch_norm(backbone)
+        self.model = backbone
+        self.intermediate_channel_sizes = self.model.feature_info.channels()
+
+        if "resnet" in name:
+            for name, parameter in self.model.named_parameters():
+                if "layer2" not in name and "layer3" not in name and "layer4" not in name:
+                    parameter.requires_grad_(False)
+
+    def forward(self, pixel_values: torch.Tensor, pixel_mask: torch.Tensor):
+        # send pixel_values through the model to get list of feature maps
+        features = self.model(pixel_values)
+
+        out = []
+        for feature_map in features:
+            # downsample pixel_mask to match shape of corresponding feature_map
+            mask = nn.functional.interpolate(pixel_mask[None].float(), size=feature_map.shape[-2:]).to(torch.bool)[0]
+            out.append((feature_map, mask))
+        return out
 
 
 class DeformableDetrTimmConvEncoder(nn.Module):

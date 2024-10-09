@@ -215,18 +215,18 @@ def ap_eval(image_ids, dets, gts, npos, rel_or_phr=True, ovthresh=0.5):
             if valid_mask.any():
                 if rel_or_phr:  # mAP(rel)
                     overlaps_s = bbox_iou(
-                        bb_s[None, :].astype(dtype=np.float32, copy=False),
-                        BBGT_s.astype(dtype=np.float32, copy=False),
+                        bb_s[None, :].astype(dtype=float32, copy=False),
+                        BBGT_s.astype(dtype=float32, copy=False),
                     )[0]
                     overlaps_o = bbox_iou(
-                        bb_o[None, :].astype(dtype=np.float32, copy=False),
-                        BBGT_o.astype(dtype=np.float32, copy=False),
+                        bb_o[None, :].astype(dtype=float32, copy=False),
+                        BBGT_o.astype(dtype=float32, copy=False),
                     )[0]
                     overlaps = np.minimum(overlaps_s, overlaps_o)
                 else:  # mAP(phr)
                     overlaps = bbox_iou(
-                        bb_r[None, :].astype(dtype=np.float32, copy=False),
-                        BBGT_r.astype(dtype=np.float32, copy=False),
+                        bb_r[None, :].astype(dtype=float32, copy=False),
+                        BBGT_r.astype(dtype=float32, copy=False),
                     )[0]
 
                 overlaps *= valid_mask
@@ -250,7 +250,7 @@ def ap_eval(image_ids, dets, gts, npos, rel_or_phr=True, ovthresh=0.5):
     tp = np.cumsum(tp)
     rec = tp / (float(npos) + 1e-12)
     # ground truth
-    prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
+    prec = tp / np.maximum(tp + fp, np.finfo(float64).eps)
     ap = get_ap(rec, prec)
 
     return rec, prec, ap

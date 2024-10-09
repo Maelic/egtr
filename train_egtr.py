@@ -175,7 +175,7 @@ def evaluate_batch(
 
 def collate_fn(batch, feature_extractor):
     pixel_values = [item[0] for item in batch]
-    encoding = feature_extractor.pad_and_create_pixel_mask(
+    encoding = feature_extractor.pad(
         pixel_values, return_tensors="pt"
     )
     labels = [item[1] for item in batch]

@@ -31,7 +31,7 @@ seed_everything(42, workers=True)
 
 def collate_fn(batch, feature_extractor):
     pixel_values = [item[0] for item in batch]
-    encoding = feature_extractor.pad_and_create_pixel_mask(
+    encoding = feature_extractor.pad(
         pixel_values, return_tensors="pt"
     )
     labels = [item[1] for item in batch]
@@ -230,9 +230,9 @@ if __name__ == "__main__":
     parser.add_argument("--ce_loss_coefficient", type=float, default=2.0)
 
     # Training
-    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--batch_size", type=int, default=2)
     parser.add_argument("--accumulate", type=int, default=1)
-    parser.add_argument("--gpus", type=int, default=8)
+    parser.add_argument("--gpus", type=int, default=1)
     parser.add_argument("--max_epochs", type=int, default=150)
     parser.add_argument("--max_epochs_finetune", type=int, default=50)
     parser.add_argument("--lr_backbone", type=float, default=1e-5)
@@ -270,7 +270,8 @@ if __name__ == "__main__":
     )
 
     # Dataset
-    if "visual_genome" in args.data_path:
+    dataset = "VG"
+    if dataset == "VG":
         train_dataset = VGDetection(
             data_folder=args.data_path,
             feature_extractor=feature_extractor_train,
@@ -317,16 +318,16 @@ if __name__ == "__main__":
 
     # Evaluator
     if args.eval_when_train_end:
-        if "visual_genome" in args.data_path:
-            coco_evaluator = CocoEvaluator(
-                val_dataset.coco, ["bbox"]
-            )  # initialize evaluator with ground truths
-            oi_coco_evaluator = None
-        elif "open-image" in args.data_path:
-            oi_coco_evaluator = OICocoEvaluator(
-                train_dataset.rel_categories, train_dataset.ind_to_classes
-            )
-            coco_evaluator = None
+        # if "visual_genome" in args.data_path:
+        coco_evaluator = CocoEvaluator(
+            val_dataset.coco, ["bbox"]
+        )  # initialize evaluator with ground truths
+        oi_coco_evaluator = None
+        # elif "open-image" in args.data_path:
+        #     oi_coco_evaluator = OICocoEvaluator(
+        #         train_dataset.rel_categories, train_dataset.ind_to_classes
+        #     )
+        #     coco_evaluator = None
     else:
         coco_evaluator = None
         oi_coco_evaluator = None

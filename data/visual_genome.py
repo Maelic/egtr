@@ -14,7 +14,7 @@ from tqdm import tqdm
 class VGDetection(torchvision.datasets.CocoDetection):
     def __init__(self, data_folder, feature_extractor, split, debug=False):
         ann_file = os.path.join(data_folder, f"{split}.json")
-        img_folder = os.path.join(data_folder, "images")
+        img_folder = "/home/maelic/Documents/Datasets/VG/VG_100K/"
         super(VGDetection, self).__init__(img_folder, ann_file)
         self.feature_extractor = feature_extractor
         self.split = split

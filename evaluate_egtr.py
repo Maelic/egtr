@@ -22,11 +22,19 @@ from model.deformable_detr import DeformableDetrConfig, DeformableDetrFeatureExt
 from model.egtr import DetrForSceneGraphGeneration
 from train_egtr import collate_fn, evaluate_batch
 
+import numpy as np
 
 @torch.no_grad()
 def calculate_fps(model, dataloader):
     model.eval()
+    i=0
+    starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+    timings = []
     for batch in tqdm(dataloader):
+        if i == 1000:
+            break
+        i+=1
+        starter.record()
         outputs = model(
             pixel_values=batch["pixel_values"].cuda(),
             pixel_mask=batch["pixel_mask"].cuda(),
@@ -34,6 +42,16 @@ def calculate_fps(model, dataloader):
             output_attention_states=True,
             output_hidden_states=True,
         )
+        ender.record()
+        torch.cuda.synchronize()
+        curr_time = starter.elapsed_time(ender)
+        timings.append(curr_time)
+    ms = np.mean(timings)
+    fps = 1000 / ms
+    # print fps and ms with precision .2f
+    print(f"fps: {fps:.2f}, ms: {ms:.2f}")
+    
+
 
 
 # Reference: https://github.com/facebookresearch/detr/blob/main/engine.py
@@ -176,7 +194,7 @@ if __name__ == "__main__":
     )
 
     # Dataset
-    if "visual_genome" in args.data_path:
+    if "vg" in args.data_path:
         test_dataset = VGDataset(
             data_folder=args.data_path,
             feature_extractor=feature_extractor,

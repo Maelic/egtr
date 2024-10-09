@@ -87,12 +87,12 @@ def eval_rel_results(all_results, predicate_cls_list, result_str=""):
 
         # in oi_all_rel some images have no dets
         if res["pred_scores"] is None:
-            det_boxes_s_top = np.zeros((0, 4), dtype=np.float32)
-            det_boxes_o_top = np.zeros((0, 4), dtype=np.float32)
+            det_boxes_s_top = np.zeros((0, 4), dtype=float32)
+            det_boxes_o_top = np.zeros((0, 4), dtype=float32)
             det_labels_s_top = np.zeros(0, dtype=np.int32)
             det_labels_p_top = np.zeros(0, dtype=np.int32)
             det_labels_o_top = np.zeros(0, dtype=np.int32)
-            det_scores_top = np.zeros(0, dtype=np.float32)
+            det_scores_top = np.zeros(0, dtype=float32)
 
         else:
             det_boxes_sbj = res["sbj_boxes"]  # (#num_rel, 4)
